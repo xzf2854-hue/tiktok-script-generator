@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>TikTok 脚本生成器</title>
+<style>
+button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem;}
+* { box-sizing: border-box;}
+:root{
+--bg:#f4f4f6; --surface:#ffffff; --surface2:#ececf0; --ink:#161823; --muted:#5c5c68;
+--line:#e0e0e7; --pink:#fe2c55; --pink-ink:#d81e42; --cyan:#0b7c86; --cyan-soft:#e2f5f6;
+--amber:#9a6a00; --amber-soft:#fdf3d8; --ok:#0d7a4a; --ok-soft:#e2f4ea;
+--shadow:0 10px 30px rgba(18,18,30,.08);
+--radius:14px;
+}
+@media (prefers-color-scheme: dark){
+:root{
+--bg:#0a0a0f; --surface:#14141c; --surface2:#1d1d27; --ink:#f3f3f6; --muted:#a6a6b2;
+--line:#282833; --pink:#fe2c55; --pink-ink:#ff5c7d; --cyan:#25f4ee; --cyan-soft:#10333a;
+--amber:#ffc44d; --amber-soft:#38300f; --ok:#3ecf8e; --ok-soft:#0f2f22;
+--shadow:0 10px 30px rgba(0,0,0,.45);
+}
+}
+html{ -webkit-text-size-adjust:100%;}
+body{
+margin:0; background:var(--bg); color:var(--ink);
+font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+line-height:1.55;
+}
+.wrap{ max-width:1180px; margin:0 auto; padding:20px 16px 48px;}
+h1{ font-size:clamp(24px,4.5vw,34px); line-height:1.2; margin:6px 0 6px; letter-spacing:.01em;}
+h1.tk{ color:var(--pink-ink);}
+.lede{ color:var(--muted); margin:0 0 18px; max-width:62ch; font-size:15px;}
+.layout{ display:grid; grid-template-columns:372px 1fr; gap:18px; align-items:start;}
+@media (max-width:900px){.layout{ grid-template-columns:1fr;}}
+.panel{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px;}
+.panel h2{ font-size:16px; margin:0 0 12px;}
+.field{ margin-bottom:16px;}
+.field > label,.field.flabel{ display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:7px; letter-spacing:.04em;}
+.topic-row{ display:flex; gap:8px;}
+.topic-row input{
+flex:1; min-width:0; padding:10px 12px; font-size:16px; color:var(--ink);
+background:var(--surface2); border:1px solid var(--line); border-radius:10px;
+}
+.topic-row input:focus{ outline:2px solid var(--pink); outline-offset:1px;}
+.dice{
+flex:none; width:44px; border-radius:10px; border:1px solid var(--line); background:var(--surface2);
+color:var(--ink); font-size:19px; cursor:pointer; line-height:1;
+}
+.dice:hover{ border-color:var(--pink);}
+.chips{ display:flex; flex-wrap:wrap; gap:7px;}
+.chip{
+padding:7px 11px; min-height:2.25rem; border-radius:999px; border:1px solid var(--line);
+background:var(--surface); color:var(--ink); font-size:13px; cursor:pointer;
+}
+.chip:hover{ border-color:var(--cyan);}
+.chip.on{ background:var(--cyan-soft); border-color:var(--cyan); color:var(--ink); font-weight:600;}
+.seg{ display:flex; flex-wrap:wrap; gap:6px;}
+.seg button{
+padding:7px 12px; border-radius:9px; border:1px solid var(--line); background:var(--surface);
+color:var(--ink); font-size:14px; cursor:pointer; min-width:44px;
+}
+.seg button.on{ background:var(--ink); color:var(--bg); border-color:var(--ink); font-weight:700;}
+.styles{ display:grid; grid-template-columns:1fr 1fr; gap:7px;}
+.styles button{
+text-align:left; padding:9px 11px; border-radius:10px; border:1px solid var(--line);
+background:var(--surface); color:var(--ink); cursor:pointer; font-size:14px;
+}
+.styles button small{ display:block; color:var(--muted); font-size:12px; margin-top:2px;}
+.styles button.on{ border-color:var(--pink); background:color-mix(in srgb, var(--pink) 7%, var(--surface));}
+.styles button.on small{ color:var(--ink);}
+.gen{
+width:100%; padding:13px; font-size:16px; font-weight:700; border:0; border-radius:11px; cursor:pointer;
+background:var(--pink); color:#fff; letter-spacing:.06em;
+}
+.gen:active{ transform:translateY(1px);}
+.hint{ font-size:12.5px; color:var(--muted); margin-top:10px;}
+/* output */
+.out-head{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px;}
+.stat{
+background:var(--surface2); border-radius:9px; padding:7px 12px; font-size:13px; color:var(--muted);
+}
+.stat b{ color:var(--ink); font-size:15px;}
+.stat.warn b{ color:var(--amber);}
+.note{
+border-radius:10px; padding:10px 13px; font-size:13.5px; margin-bottom:14px; display:none;
+}
+.note.show{ display:block;}
+.note.template{ background:var(--amber-soft); color:var(--ink);}
+.note.fact{ background:var(--ok-soft); color:var(--ink);}
+.note b{ margin-right:4px;}
+.board{ display:grid; grid-template-columns:236px 1fr; gap:18px; align-items:start;}
+@media (max-width:640px){.board{ grid-template-columns:1fr;}}
+/* phone preview */
+.phone-col{ position:sticky; top:14px;}
+@media (max-width:640px){.phone-col{ position:static; margin:0 auto; width:236px;}}
+.phone{
+width:236px; aspect-ratio:9/16; border-radius:26px; border:3px solid var(--ink);
+overflow:hidden; position:relative; background:#101018; color:#fff;
+display:flex; flex-direction:column; justify-content:flex-end;
+}
+.phone .scene{
+position:absolute; inset:0; padding:16px 14px; display:flex; flex-direction:column;
+}
+.phone .scene-desc{ font-size:12px; color:rgba(255,255,255,.85); line-height:1.5;}
+.phone .shot-tag{
+align-self:flex-start; font-size:11px; font-weight:700; letter-spacing:.08em;
+background:rgba(0,0,0,.45); padding:3px 8px; border-radius:6px; margin-bottom:8px;
+}
+.phone .big{
+margin-top:auto; font-size:25px; font-weight:800; line-height:1.3; text-shadow:0 2px 10px rgba(0,0,0,.55);
+}
+.phone .sub{
+margin-top:8px; font-size:13px; line-height:1.5; background:rgba(0,0,0,.5);
+padding:7px 9px; border-radius:8px; min-height:44px;
+}
+.phone .bar{ height:4px; background:rgba(255,255,255,.25);}
+.phone .bar i{ display:block; height:100%; width:0%; background:var(--pink); transition:width.2s linear;}
+.play-row{ display:flex; gap:7px; margin-top:10px;}
+.play-row button{
+flex:1; padding:8px 4px; border-radius:9px; border:1px solid var(--line); cursor:pointer;
+background:var(--surface); color:var(--ink); font-size:13.5px; font-weight:600;
+}
+.play-row button.primary{ background:var(--ink); color:var(--bg); border-color:var(--ink);}
+/* storyboard */
+.shots{ display:flex; flex-direction:column; gap:12px;}
+.shot{
+border:1px solid var(--line); border-radius:12px; padding:13px 14px; background:var(--surface);
+cursor:pointer; transition:border-color.15s;
+}
+.shot:hover{ border-color:var(--cyan);}
+.shot.active{ border-color:var(--pink); box-shadow:0 0 0 1px var(--pink);}
+.shot-top{ display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:7px;}
+.shot-no{ font-weight:800; font-size:15px;}
+.tc{ font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--muted);}
+.role{
+font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:.05em;
+background:var(--cyan-soft); color:var(--ink);
+}
+.role.hook{ background:var(--pink); color:#fff;}
+.role.end{ background:var(--ink); color:var(--bg);}
+.shot p{ margin:5px 0; font-size:14px;}
+.shot.k{ color:var(--muted); font-size:12px; font-weight:700; letter-spacing:.05em; margin-right:6px;}
+.shot.vo{ font-size:15px; font-weight:600;}
+.shot.prompt{ color:var(--muted); font-size:12.5px;}
+.meta-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;}
+@media (max-width:640px){.meta-grid{ grid-template-columns:1fr;}}
+.meta-box{ border:1px solid var(--line); border-radius:12px; padding:13px 14px; background:var(--surface);}
+.meta-box h3{ margin:0 0 8px; font-size:14px;}
+.meta-box p,.meta-box li{ font-size:13.5px;}
+.meta-box ul{ margin:0; padding-left:18px;}
+.meta-box li{ margin:4px 0;}
+.tags{ display:flex; flex-wrap:wrap; gap:6px;}
+.tag{ font-size:12.5px; background:var(--surface2); border-radius:6px; padding:3px 8px;}
+.export-row{ display:flex; flex-wrap:wrap; gap:9px; margin-top:16px;}
+.export-row button{
+padding:10px 18px; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer;
+border:1px solid var(--ink); background:var(--surface); color:var(--ink);
+}
+.export-row button.primary{ background:var(--ink); color:var(--bg);}
+.toast{
+position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); opacity:0;
+background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:999px; font-size:14px;
+pointer-events:none; transition:all.25s; z-index:50; max-width:88vw; text-align:center;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0);}
+.empty{ color:var(--muted); font-size:14.5px; padding:26px 6px; text-align:center;}
+footer{ margin-top:26px; color:var(--muted); font-size:12.5px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>TikTok <span class="tk">脚本</span>生成器</h1>
+<p class="lede">输入一个冷知识主题，生成一份 30–50 秒的竖屏分镜脚本：每镜带时间码、画面提示词、旁白文案和屏幕大字。时长按旁白字数和语速实算，不是估的。</p>
+
+<div class="layout">
+<!-- ===== controls ===== -->
+<section class="panel" aria-label="生成设置">
+<h2>生成设置</h2>
+
+<div class="field">
+<label for="topic">冷知识主题</label>
+<div class="topic-row">
+<input id="topic" type="text" placeholder="例如：1518 年的跳舞瘟疫" autocomplete="off" />
+<button class="dice" id="dice" type="button" title="随机换一个主题" aria-label="随机换一个主题">⟳</button>
+</div>
+</div>
+
+<div class="field">
+<span class="flabel">选题库（事实已核实，可直接拍）</span>
+<div class="chips" id="chips"></div>
+</div>
+
+<div class="field">
+<span class="flabel">目标时长</span>
+<div class="seg" id="segDur" role="group" aria-label="目标时长">
+<button type="button" data-v="30">30 秒</button>
+<button type="button" data-v="35">35 秒</button>
+<button type="button" data-v="40" class="on">40 秒</button>
+<button type="button" data-v="45">45 秒</button>
+<button type="button" data-v="50">50 秒</button>
+</div>
+</div>
+
+<div class="field">
+<span class="flabel">叙事风格</span>
+<div class="styles" id="styles">
+<button type="button" data-v="suspense" class="on">悬疑揭秘<small>压低声音，层层反转</small></button>
+<button type="button" data-v="science">轻松科普<small>像朋友聊天一样讲清</small></button>
+<button type="button" data-v="shock">震撼猎奇<small>语气拉满，冲击优先</small></button>
+<button type="button" data-v="story">故事叙事<small>以人物和场景代入</small></button>
+</div>
+</div>
+
+<div class="field">
+<span class="flabel">旁白语言</span>
+<div class="seg" id="segLang" role="group" aria-label="旁白语言">
+<button type="button" data-v="zh" class="on">中文旁白</button>
+<button type="button" data-v="en">English</button>
+</div>
+</div>
+
+<div class="field">
+<span class="flabel">配音语速</span>
+<div class="seg" id="segRate" role="group" aria-label="配音语速">
+<button type="button" data-v="slow">慢</button>
+<button type="button" data-v="std" class="on">标准</button>
+<button type="button" data-v="fast">快</button>
+</div>
+</div>
+
+<button class="gen" id="genBtn" type="button">生成分镜脚本</button>
+<p class="hint">选题库之外的主题会生成结构模板：事实点用标出，填入并核实后再拍，避免把没核实的内容发出去。</p>
+</section>
+
+<!-- ===== output ===== -->
+<section class="panel" aria-label="脚本输出">
+<div class="out-head" id="outHead" style="display:none">
+<span class="stat">总时长 <b id="stTotal">–</b></span>
+<span class="stat">镜头 <b id="stShots">–</b></span>
+<span class="stat">旁白 <b id="stWords">–</b></span>
+<span class="stat">画幅 <b>9:16 竖屏</b></span>
+<span class="stat warn" id="stWarn" style="display:none">与目标差 <b id="stDiff">–</b></span>
+</div>
+
+<div class="note" id="noteBox"></div>
+
+<div id="outBody">
+<p class="empty">在左侧输入主题，或点一个选题库里的题目，再点「生成分镜脚本」。</p>
+</div>
+
+<div id="exportZone" style="display:none">
+<div class="meta-grid">
+<div class="meta-box">
+<h3>背景音乐</h3>
+<p id="bgmText" style="margin:0"></p>
+</div>
+<div class="meta-box">
+<h3>话题标签</h3>
+<div class="tags" id="tagBox"></div>
+</div>
+<div class="meta-box">
+<h3>制作清单（按这个顺序做）</h3>
+<ul>
+<li>先录旁白定全片时钟，再按时间码配画面</li>
+<li>第一镜的画面定为风格锚点，后续镜头以它为参考图生成</li>
+<li>人物与场景描述词逐字复用，一镜只做一个动作</li>
+<li>画面里的文字一律后期添加，不让生成工具写字</li>
+<li>背景音乐做侧链压缩，给旁白让出 −12～−15 dB</li>
+<li>成片响度归一到 −14 LUFS 再发布</li>
+</ul>
+</div>
+<div class="meta-box">
+<h3>封面建议</h3>
+<p id="coverText" style="margin:0"></p>
+</div>
+</div>
+<div class="export-row">
+<button class="primary" id="copyBtn" type="button">复制完整脚本</button>
+<button id="dlBtn" type="button">下载 Markdown</button>
+</div>
+</div>
+</section>
+</div>
+
+<footer>TikTok 故事脚本生成工具 · 选题库事实均来自公开史料与研究，发布前建议再核对一遍原文出处</footer>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+/* ================= 选题库：事实已核实的题目 =================
+每题 6 镜：第 5 镜 deep=true 为加深镜，目标时长较长时才插入。
+zh = 中文旁白，en = English voiceover。 */
+var TOPICS = [
+{
+name:"1518 年的跳舞瘟疫", keys:["跳舞瘟疫","dancing plague","1518","跳舞"],
+bgm:"阴森的弦乐拨奏 + 低频心跳鼓点",
+factNote:"史实：1518 年 7 月斯特拉斯堡，一名女子开始不停跳舞，数周内数百人加入，有人跳到力竭。成因至今无定论，主流说法有麦角中毒与群体性心因反应两种。",
+tags:["历史之谜","冷知识","未解之谜"],
+shots:[
+{role:"钩子", zh:"1518 年，一群人跳舞跳到倒下，几个星期都停不下来。", en:"In 1518, hundreds of people danced until they collapsed — and they couldn't stop for weeks.", visual:"中世纪街道，人群机械地重复舞步，表情空洞，阴天冷色调", big:"跳舞跳到停不下来"},
+{role:"铺垫", zh:"事情发生在斯特拉斯堡，就是今天法国东北部的那座城市。一名女子走上街头开始跳舞，没有音乐，她就是停不下来。", en:"It started in Strasbourg, in what is now north-eastern France. A woman stepped into the street and began to dance. No music. She just couldn't stop.", visual:"空荡的石板街道，一名女子独自旋转，路人驻足围观", big:"没有音乐，她却停不下来"},
+{role:"展开", zh:"接下来一周，陆续有上百人加入。他们不是在庆祝，很多人表情痛苦，却控制不了自己的腿。", en:"Within a week, over a hundred people had joined her. They weren't celebrating. Many looked terrified — their legs simply wouldn't obey.", visual:"人群越聚越多，舞步整齐得诡异，有人扶墙喘气还在动", big:"上百人被迫加入"},
+{role:"反转", zh:"当局以为运动能治好他们，干脆搭起舞台、请来乐队。结果跳的人反而更多了。", en:"Officials thought exercise would cure them, so they built a stage and hired musicians. It backfired — even more people started dancing.", visual:"木台上乐队演奏，台下人群疯狂舞动，官员面面相觑", big:"官方请乐队，结果更糟"},
+{role:"加深", deep:true, zh:"现代研究者给出两种解释：误食了含麦角菌的黑麦，或者长期饥荒压抑下的群体性心因反应。", en:"Modern researchers offer two theories: ergot poisoning from contaminated rye, or mass hysteria under years of famine and stress.", visual:"黑麦田特写，麦穗上生着紫色菌核，画面切到史料木刻画", big:"毒麦子？还是心理传染？"},
+{role:"结尾", zh:"这场瘟疫持续了数周才慢慢平息，而真正的病因，五百年后依然没有定论。", en:"The dancing plague faded after several weeks. Five hundred years later, we still don't know exactly what caused it.", visual:"黄昏街道空无一人，只剩一只被踩坏的舞鞋", big:"500 年了，仍无定论"}
+]
+},
+{
+name:"永生不死的灯塔水母", keys:["灯塔水母","水母","永生","turritopsis","不死"],
+bgm:"空灵的海底氛围音 + 稀疏钢琴单音",
+factNote:"生物学事实：灯塔水母（Turritopsis dohrnii）在受伤或衰老时可退回水螅体阶段重新生长，理论上可循环往复，被称为“生物学永生”，但仍会被天敌吃掉。",
+tags:["海洋生物","冷知识","永生"],
+shots:[
+{role:"钩子", zh:"有一种水母，理论上永远不会老死，因为它能让自己返老还童。", en:"There's a jellyfish that, in theory, never dies of old age — because it can grow young again.", visual:"深蓝海水中一只透明小水母发着微光，触手缓缓摆动", big:"能返老还童的水母"},
+{role:"铺垫", zh:"它叫灯塔水母，只有指甲盖大小，生活在全球的温带海域里，平时毫不起眼。", en:"It's called Turritopsis dohrnii, the immortal jellyfish. It's the size of a fingernail and lives in temperate seas worldwide.", visual:"水母与手指大小对比，镜头缓缓推近它的钟状体", big:"只有指甲盖大小"},
+{role:"展开", zh:"当它受伤、生病或者老去时，它不会死，而是沉到海底，把身体缩成一个小团。", en:"When it's injured, sick, or old, it doesn't die. It sinks to the ocean floor and collapses into a tiny blob.", visual:"水母缓缓下沉，身体蜷缩成一团落在海底", big:"老了就沉底重组"},
+{role:"反转", zh:"几天后，这个小团重新长成水螅体，再长出一只全新的水母。基因没变，年纪清零。", en:"Days later, that blob grows into a polyp — and buds off a brand-new jellyfish. Same genes. Age reset to zero.", visual:"海底小团抽出新芽，分化出幼体水母缓缓升起", big:"基因没变，年纪清零"},
+{role:"加深", deep:true, zh:"这个过程叫转分化：它的成年细胞能退回干细胞状态，再重新分化成别的细胞。", en:"The process is called transdifferentiation: its adult cells revert to a stem-cell state, then rebuild the body from scratch.", visual:"细胞层面的微观动画，细胞形态来回转换", big:"细胞能退回出厂设置"},
+{role:"结尾", zh:"当然，它还是会被鱼吃掉。但在不被吃的前提下，它已经把死亡这条路绕开了。", en:"Of course, it can still be eaten. But left alone, it has found a way to simply skip death by aging.", visual:"小水母在光束中远去，海面波光粼粼", big:"把死亡绕开了"}
+]
+},
+{
+name:"索默顿人：海滩上的无名男尸", keys:["索默顿","somerton","无名男尸","tamam"],
+bgm:"老式收音机杂音 + 悬疑提琴长音",
+factNote:"真实案件：1948 年澳大利亚阿德莱德海滩发现一具无名男尸，口袋纸条写着波斯语“Tamám Shud”（意为“结束了”）。2022 年阿德莱德大学团队以 DNA 分析提出其身份可能为卡尔·韦布，官方尚未最终确认。",
+tags:["未解之谜","真实案件","冷知识"],
+shots:[
+{role:"钩子", zh:"1948 年，一个男人死在海滩上，身上所有标签都被剪掉，身份成谜超过七十年。", en:"In 1948, a man was found dead on a beach. Every label was cut from his clothes. His identity stayed unknown for over 70 years.", visual:"清晨海滩，一个穿西装的男人靠墙坐着，海浪声，海鸥盘旋", big:"海滩上的无名男尸"},
+{role:"铺垫", zh:"他穿着考究，没有钱包，没有证件，衣服上的商标和尺码标全被人仔细剪走。", en:"He was well dressed, but carried no wallet and no ID. Even the brand tags in his clothes had been carefully snipped out.", visual:"西装内衬特写，标签被剪掉的线头清晰可见", big:"所有标签都被剪掉"},
+{role:"展开", zh:"验尸找不到死因。毒理检测没有结果，他就像是被凭空放倒在了沙滩上。", en:"The autopsy found no cause of death. Toxicology came back empty. It was as if he had simply been switched off on the sand.", visual:"老照片风格的验尸室，医生对着报告皱眉摇头", big:"死因至今不明"},
+{role:"反转", zh:"几个月后，警方在他裤子暗袋里摸到一小卷纸，上面印着一句波斯语：Tamám Shud，意思是——结束了。", en:"Months later, police found a tiny scrap of paper hidden in a secret pocket. It read 'Tamám Shud' — Persian for 'It is ended.'", visual:"镊子从暗袋夹出一小卷纸，缓缓展开露出字样", big:"暗袋里的纸条：结束了"},
+{role:"加深", deep:true, zh:"2022 年，研究者用他头发里的 DNA 比对族谱，提出他可能是墨尔本工程师卡尔·韦布，但官方还没最终确认。", en:"In 2022, DNA from his hair led researchers to propose he was Carl Webb, an engineer from Melbourne — though it has never been officially confirmed.", visual:"实验室里提取发丝 DNA，屏幕上族谱树缓缓展开", big:"DNA 给出一个名字"},
+{role:"结尾", zh:"他是谁，为什么死，纸条又是谁放的？七十多年过去，没人能给出完整答案。", en:"Who was he? Why did he die? Who left the note? After more than seventy years, nobody can answer all three.", visual:"海滩恢复平静，脚印被潮水慢慢抹平", big:"三个问题，无人能答"}
+]
+},
+{
+name:"章鱼有三颗心脏，血是蓝的", keys:["章鱼","三颗心脏","蓝血","octopus"],
+bgm:"轻快的拨弦 + 水泡音效点缀",
+factNote:"生物学事实：章鱼有三颗心脏、九个大脑（一个中央脑加八条腕各一个神经中枢），血液因含血蓝蛋白呈蓝色；游泳时负责全身供血的主心脏会停跳，所以章鱼更爱爬行。",
+tags:["海洋生物","动物冷知识","章鱼"],
+shots:[
+{role:"钩子", zh:"章鱼有三颗心脏、九个大脑，血还是蓝色的。它根本不像地球生物。", en:"An octopus has three hearts, nine brains, and blue blood. It barely seems like an Earth animal at all.", visual:"章鱼在珊瑚礁间舒展八条腕足，皮肤变色流动", big:"三颗心脏，九个大脑"},
+{role:"铺垫", zh:"先说心脏：两颗小的专门给鳃供血，一颗大的负责把血送往全身。", en:"First, the hearts: two smaller ones pump blood to the gills, and one larger heart sends it around the body.", visual:"半透明解剖风格示意，三颗心脏依次亮起跳动", big:"两颗管鳃，一颗管全身"},
+{role:"展开", zh:"再说蓝血：它的血里运氧的不是铁，而是铜。天冷缺氧时，铜比铁更管用。", en:"The blue blood? It carries oxygen with copper instead of iron — which works better in cold, low-oxygen water.", visual:"蓝色血液在血管中流动的微观画面，铜离子闪光", big:"血里流的是铜"},
+{role:"反转", zh:"最怪的是：它游泳时，主心脏会直接停跳。所以章鱼宁愿在海底爬，也不爱游泳。", en:"Strangest of all: when it swims, its main heart stops beating. That's why octopuses prefer crawling to swimming.", visual:"章鱼游两下就落回海底，改用腕足慢悠悠爬行", big:"一游泳，心脏就停跳"},
+{role:"加深", deep:true, zh:"而它的八条腕足，每条都有独立的神经中枢。也就是说，它的“大脑”有三分之二长在胳膊上。", en:"And each of its eight arms has its own nerve center. Two-thirds of its neurons are literally in its arms.", visual:"八条腕足各自灵活地探索、抓取、开盖，互不干扰", big:"大脑长在胳膊上"},
+{role:"结尾", zh:"所以别小看章鱼：它可能是这颗星球上，离外星生命最近的物种。", en:"So never underestimate an octopus — it might be the closest thing to an alien living on this planet.", visual:"章鱼直视镜头，瞳孔呈独特的横条形", big:"最像外星生物的地球居民"}
+]
+},
+{
+name:"蜂蜜放三千年也不会坏", keys:["蜂蜜","三千年","不变质","honey"],
+bgm:"温暖的木吉他指弹 + 轻微陶罐碰撞声",
+factNote:"食品科学事实：考古学家在古埃及墓葬中发现约 3000 年前的蜂蜜，仍可食用。蜂蜜含水量低、酸性强，蜜蜂还会加入酶产生微量过氧化氢，细菌难以存活。",
+tags:["食物冷知识","历史","蜂蜜"],
+shots:[
+{role:"钩子", zh:"考古学家在埃及古墓里挖出三千年前的蜂蜜，打开一看，还能吃。", en:"Archaeologists found honey in an ancient Egyptian tomb — three thousand years old. And it was still edible.", visual:"昏暗墓室中一只陶罐被打开，金黄蜂蜜拉出细丝", big:"3000 年前的蜂蜜还能吃"},
+{role:"铺垫", zh:"蜂蜜可能是人类货架上唯一一种真正不会变质的食物。没有之一。", en:"Honey may be the only food on your shelf that genuinely never spoils. No contest.", visual:"现代厨房货架，蜂蜜罐在食品中被单独高亮", big:"唯一不会坏的食物"},
+{role:"展开", zh:"原因一：它含水量极低。细菌和霉菌一进去，水分就被吸干，直接脱水而死。", en:"Reason one: it holds almost no water. Bacteria that land in it get their moisture sucked out and die.", visual:"微观画面，细菌在蜂蜜中迅速干瘪", big:"细菌进去就被渴死"},
+{role:"反转", zh:"原因二：它是酸性的，还自带微量过氧化氢。蜜蜂亲手给它上了三重保险。", en:"Reason two: it's acidic, and bees add an enzyme that creates hydrogen peroxide. Triple protection, built in by bees.", visual:"蜜蜂在蜂巢上忙碌，蜂巢六角格闪着金光", big:"蜜蜂上了三重保险"},
+{role:"加深", deep:true, zh:"不过注意：蜂蜜结晶、发白都不是变质，那是葡萄糖析出，温水泡一泡就化开。", en:"One note: crystallization isn't spoilage. That's just glucose settling out — warm water melts it back.", visual:"结晶的蜂蜜罐放进温水，慢慢恢复流动", big:"结晶 ≠ 变质"},
+{role:"结尾", zh:"下次看到家里那罐放了很久的蜂蜜，别扔。它可能比你的房子还要长寿。", en:"So don't throw out that old jar of honey. It might just outlive your house.", visual:"阳光下蜂蜜罐透亮，镜头拉远成静物画面", big:"比房子还长寿"}
+]
+},
+{
+name:"月球上的脚印能留几百万年", keys:["月球","脚印","阿波罗","moon","宇航员"],
+bgm:"空旷的合成器长音 + 宇航服呼吸声",
+factNote:"天文事实：月球几乎没有大气和液态水，没有风雨侵蚀，阿波罗宇航员的脚印预计可保存数百万年，主要磨损来自微陨石撞击与月震。",
+tags:["太空","冷知识","阿波罗"],
+shots:[
+{role:"钩子", zh:"1969 年留在月球上的脚印，到今天还清晰得像昨天踩的，而且能再留几百万年。", en:"The footprints left on the Moon in 1969 still look fresh today — and they could last for millions of years.", visual:"灰色月壤特写，一串靴印延伸向地平线，地球悬在黑空", big:"脚印能留几百万年"},
+{role:"铺垫", zh:"在地球上，脚印撑不过一场雨。但月球上，没有风，没有雨，甚至几乎没有空气。", en:"On Earth, a footprint doesn't survive one rainstorm. On the Moon there is no wind, no rain — almost no air at all.", visual:"画面左右分屏：地球海滩脚印被浪冲平，月面脚印纹丝不动", big:"没有风，也没有雨"},
+{role:"展开", zh:"没有侵蚀，脚印就只能慢慢等微陨石来磨。这个过程，是按百万年计时的。", en:"With no erosion, only micrometeorites slowly wear them down — a process measured in millions of years.", visual:"微小陨石如尘埃般偶尔落在月面，激起一丝灰尘", big:"磨损按百万年计时"},
+{role:"反转", zh:"也就是说，人类在月球上留下的痕迹，很可能比人类文明本身存在得还久。", en:"Which means humanity's marks on the Moon may well outlast human civilization itself.", visual:"镜头拉远，登陆舱与脚印在荒凉月面显得极小", big:"比文明活得还久"},
+{role:"加深", deep:true, zh:"不只是脚印：旗帜、月球车、相机都还在原地，静静躺在没有天气的世界里。", en:"And not just footprints — flags, rovers, and cameras still sit exactly where they were left, in a world with no weather.", visual:"月球车静置月面，车辙一路延伸到远处", big:"所有东西都还在原地"},
+{role:"结尾", zh:"下次抬头看月亮，想一想：上面有十二个人留下的脚印，还在等下一个访客。", en:"Next time you look up at the Moon, remember: twelve people's footprints are still up there, waiting for the next visitor.", visual:"夜空满月特写，缓缓叠化出月面脚印", big:"脚印还在等下一个访客"}
+]
+},
+{
+name:"金鱼的记忆根本不止三秒", keys:["金鱼","记忆","三秒","goldfish"],
+bgm:"俏皮的木琴 + 水泡咕噜声",
+factNote:"动物行为学事实：“金鱼记忆只有 3 秒”是谣言。多项实验表明金鱼记忆可达数月，能学会按杠杆取食、辨认喂食者与走迷宫。",
+tags:["辟谣","动物冷知识","金鱼"],
+shots:[
+{role:"钩子", zh:"“金鱼记忆只有三秒”这句话，本身就是个谣言。金鱼能记住好几个月的事。", en:"'Goldfish have a three-second memory' is itself a myth. Goldfish can remember things for months.", visual:"金鱼缸特写，金鱼直视镜头，画面浮现一个被划掉的“3 秒”", big:"三秒记忆是谣言"},
+{role:"铺垫", zh:"科学家做过实验：训练金鱼听到声音就去固定角落等食。几周后，它一次都没记错。", en:"Scientists trained goldfish to come to one corner when they heard a sound. Weeks later, the fish still remembered perfectly.", visual:"实验室鱼缸，金鱼听到提示音齐刷刷游向角落", big:"几周后一次没记错"},
+{role:"展开", zh:"还有金鱼学会了按压杠杆换食物，甚至能分辨出哪个时间段按才有效。", en:"Other goldfish learned to press a lever for food — and even figured out which hour of the day the lever actually worked.", visual:"金鱼用嘴顶动小杠杆，食物缓缓落下", big:"还会看时间按杠杆"},
+{role:"反转", zh:"更有意思的是：它们能认人。喂它的那个人一靠近，还没撒食就开始兴奋。", en:"Even better: they recognize people. The person who feeds them gets an excited crowd before any food appears.", visual:"主人走近鱼缸，金鱼群立刻涌向水面", big:"能认出喂它的人"},
+{role:"加深", deep:true, zh:"“三秒记忆”据说源于对鱼缸太小的辩护：鱼要是记得住，就不会甘心一辈子绕圈了。", en:"The myth may have stuck around because it excuses tiny bowls — a fish that remembers would mind the circling a lot more.", visual:"小鱼缸与大水族箱对比，画面停顿一拍", big:"谣言背后的小心思"},
+{role:"结尾", zh:"所以下次有人说你记性像金鱼，你可以回他：谢谢，那是好几个月的水平。", en:"So next time someone compares your memory to a goldfish, thank them — that's months of memory, actually.", visual:"金鱼吐出一串泡泡，悠然游开", big:"金鱼记性：好几个月"}
+]
+},
+{
+name:"北极熊的毛其实是透明的", keys:["北极熊","透明","毛发","polar bear"],
+bgm:"极地风声 + 空灵铃音",
+factNote:"生物学事实：北极熊的毛发本身无色透明、中空，靠光线散射看起来呈白色；它的皮肤其实是黑色的，有助于吸收热量。",
+tags:["动物冷知识","北极熊","辟谣"],
+shots:[
+{role:"钩子", zh:"北极熊的毛不是白色的，是透明的。连它的皮肤，都是黑色的。", en:"A polar bear's fur isn't white — it's transparent. And underneath, its skin is black.", visual:"雪原上北极熊迎面走来，阳光穿过毛发边缘发亮", big:"毛是透明的，皮是黑的"},
+{role:"铺垫", zh:"它每一根毛都像一根空心的小玻璃管，本身没有任何色素。", en:"Each hair is like a tiny hollow glass tube, with no pigment in it at all.", visual:"显微镜下单根毛发的中空结构，光在里面折射", big:"每根毛都是空心管"},
+{role:"展开", zh:"阳光照进这些小管子，被反复散射，散射掉所有颜色，看起来就成了白色。", en:"Sunlight enters the tubes and scatters in every direction. Scatter all colors equally, and your eyes see white.", visual:"光束进入毛发层层散射的动画示意", big:"白色是散射出来的"},
+{role:"反转", zh:"把毛剃掉你会看到：它的皮肤是纯黑的。黑色吸热，在极地是保命的设计。", en:"Shave the fur away and you'd find pure black skin — which absorbs heat, a lifesaving design in the Arctic.", visual:"示意画面：毛层之下是深色的皮肤层", big:"黑皮肤是为了吸热"},
+{role:"加深", deep:true, zh:"在动物园里，北极熊的毛有时会微微发绿，那是藻类钻进了空心毛管里安家。", en:"In zoos, their fur sometimes turns faintly green — algae move into those hollow tubes and set up home.", visual:"毛发特写泛起淡淡绿色，藻类在管中漂浮", big:"毛里还能长藻类"},
+{role:"结尾", zh:"所以白色只是光的把戏。北极熊，是大自然最成功的伪装大师。", en:"So the white is just a trick of the light. The polar bear is nature's master of disguise.", visual:"北极熊融入雪原，只剩鼻子和眼睛可见", big:"白色只是光的把戏"}
+]
+}
+];
+/* 仅有名称、走结构模板的备选主题 */
+var EXTRA_IDEAS = ["猫为什么总能四脚着地","闪电的温度比太阳表面还高","考拉的指纹和人类几乎一样","蜂鸟是唯一能倒着飞的鸟","树懒慢到身上长青苔","香蕉含有微量放射性钾-40","长颈鹿的心脏重达 11 公斤","打喷嚏时眼睛为什么会闭上"];
+</script>
+<script>
+"use strict";
+/* ================= 状态与工具 ================= */
+var state = { dur:40, style:"suspense", lang:"zh", rate:"std", topic:null, script:null, playIdx:-1, playing:false, timer:null };
+var RATES = { zh:{slow:3.4, std:4.2, fast:5.2}, en:{slow:2.0, std:2.5, fast:3.1} }; /* 每秒字数 / 每秒词数 */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function countUnits(text, lang){
+  if(lang==="en"){ return text.replace(/【[^】]*】/g," ").trim().split(/\s+/).filter(Boolean).length; }
+  return text.replace(/[\s，。！？、；：""''（）《》…—·,.!?;:'"()]/g,"").length;
+}
+function shotSeconds(text, lang, rateKey){
+  var u = countUnits(text, lang);
+  var s = u / RATES[lang][rateKey];
+  return Math.max(2, Math.min(10, Math.round(s*2)/2));
+}
+function fmtClock(sec){
+  var m = Math.floor(sec/60), s = sec - m*60;
+  var whole = Math.floor(s), frac = Math.round((s-whole)*10);
+  if(frac===10){ whole += 1; frac = 0; }
+  return m + ":" + (whole<10?"0":"") + whole + (frac ? "." + frac : "");
+}
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+}
+
+/* ================= 风格变体 ================= */
+var STYLES = {
+  suspense:{ label:"悬疑揭秘", bgmSuffix:"全程压着音量，旁白干声略靠前，反转点前留 0.5 秒静默",
+    ctaZh:"真相往往比传说更怪。关注我，下一条更离谱。", ctaEn:"The truth is usually stranger than the legend. Follow for the next one.",
+    trans:"硬切 + 低频轰鸣", sfx:"心跳声渐入，反转处一声闷响" },
+  science:{ label:"轻松科普", bgmSuffix:"音量保持在旁白之下，不抢词，结尾自然淡出",
+    ctaZh:"把冷知识讲明白，才是真本事。关注我，每天学一点。", ctaEn:"Explaining it simply is the real skill. Follow for one fact a day.",
+    trans:"叠化 + 轻响指音效", sfx:"水泡、翻页等轻音效点缀" },
+  shock:{ label:"震撼猎奇", bgmSuffix:"鼓点密度拉高，钩子处直接满音量进鼓点",
+    ctaZh:"这还只是冰山一角。关注我，带你看世界的背面。", ctaEn:"And that's just the tip of it. Follow to see the hidden side of the world.",
+    trans:"快速推镜 + 鼓点重击", sfx:"重击鼓点 + 升调音效" },
+  story:{ label:"故事叙事", bgmSuffix:"以环境音起幅，音乐随情绪起伏，结尾留白两秒",
+    ctaZh:"故事讲完了，但它留给我们的问题还没有答案。", ctaEn:"The story ends here — but the questions it leaves are still open.",
+    trans:"黑场 0.3 秒 + 环境音衔接", sfx:"环境音为主，音乐托底" }
+};
+function applyStyle(shots, styleKey, lang){
+  var st = STYLES[styleKey];
+  var out = shots.map(function(s){ return Object.assign({}, s); });
+  var last = out[out.length-1];
+  if(lang==="zh"){ last.zh = last.zh.replace(/。?$/, "。") + st.ctaZh; }
+  else { last.en = last.en.replace(/\.?$/, ".") + " " + st.ctaEn; }
+  out.forEach(function(s){ s.trans = st.trans; s.sfx = st.sfx; });
+  return out;
+}
+
+/* ================= 结构模板（未收录主题） ================= */
+function genericShots(topic, lang){
+  var t = topic;
+  if(lang==="en"){
+    return [
+      {role:"钩子", en:"Here's something about " + t + " that almost nobody knows — and it changes how you'll see it forever.", zh:"", visual:"竖屏特写开场：主题主体居中怼脸拍，背景虚化，第一帧就要认出主题", big:t + "的隐藏真相"},
+      {role:"铺垫", en:"Most people think they understand " + t + ". But the familiar version leaves out the most interesting part.", zh:"", visual:"日常场景中的主题，平缓推镜，营造“你以为你懂了”的氛围", big:"你以为的，可能只对了一半"},
+      {role:"展开", en:"[Fill in core fact #1 about " + t + " — one sentence, the most counterintuitive point, with a source you have checked.]", zh:"", visual:"呈现核心事实的证据画面：实物、数据或复原场景，特写加缓慢横移", big:"【核心事实 1 的关键词】"},
+      {role:"反转", en:"[Fill in the twist: the second fact about " + t + " that goes against intuition, or the real cause behind fact #1.]", zh:"", visual:"镜头快速推近或切换角度，画面信息出现明显反差", big:"【反转点关键词】"},
+      {role:"加深", deep:true, en:"[Optional depth: a number, a comparison, or a historical anecdote about " + t + " that makes the fact stick.]", zh:"", visual:"对比画面：把事实与日常参照物同框，大小或数量一目了然", big:"【一个数字，讲清它】"},
+      {role:"结尾", en:"So next time " + t + " comes up, you'll know the part almost nobody else does.", zh:"", visual:"回到开场同款构图收尾，主体缓缓远离或定格", big:"记住这一句就够了"}
+    ];
+  }
+  return [
+    {role:"钩子", zh:"关于" + t + "，有个细节几乎没人注意到，但它能颠覆你对它的全部印象。", en:"", visual:"竖屏特写开场：主题主体居中怼脸拍，背景虚化，第一帧就要认出主题", big:t + "的隐藏细节"},
+    {role:"铺垫", zh:"大多数人对" + t + "的印象，其实只对了一半。真正有意思的部分，一直被忽略了。", en:"", visual:"日常场景中的主题，平缓推镜，营造“你以为你懂了”的氛围", big:"你以为的，只对了一半"},
+    {role:"展开", zh:"【填入核心事实 1：一句话讲清" + t + "最反常的一点，须是你已核实过的内容】", en:"", visual:"呈现核心事实的证据画面：实物、数据或复原场景，特写加缓慢横移", big:"【核心事实的关键词】"},
+    {role:"反转", zh:"【填入反转点：与直觉相反的第二个事实，或核心事实背后真正的原因】", en:"", visual:"镜头快速推近或切换角度，画面信息出现明显反差", big:"【反转点关键词】"},
+    {role:"加深", deep:true, zh:"【选填加深：一个数字、一个对比，或一段与" + t + "有关的历史掌故，让事实更容易被记住】", en:"", visual:"对比画面：把事实与日常参照物同框，大小或数量一目了然", big:"【一个数字讲清它】"},
+    {role:"结尾", zh:"所以下次聊到" + t + "，你可以比在场大多数人，多讲出关键的一句。", en:"", visual:"回到开场同款构图收尾，主体缓缓远离或定格", big:"记住这一句就够了"}
+  ];
+}
+
+/* ================= 组装脚本：按时长挑选镜头并实算时间 ================= */
+function assemble(rawShots, opts){
+  var core = rawShots.filter(function(s){ return !s.deep; });
+  var deep = rawShots.filter(function(s){ return s.deep; });
+  function totalOf(list){
+    return list.reduce(function(a,s){ return a + shotSeconds(opts.lang==="en" ? s.en : s.zh, opts.lang, opts.rate); }, 0);
+  }
+  var chosen = core.slice();
+  if(totalOf(chosen) < opts.dur - 3 && deep.length){
+    /* 把加深镜插回原位（结尾之前） */
+    var withDeep = [];
+    rawShots.forEach(function(s){ if(!s.deep || totalOf(withDeep.concat([s])) <= opts.dur + 2) withDeep.push(s); });
+    chosen = withDeep;
+  }
+  var t = 0;
+  var shots = chosen.map(function(s){
+    var text = opts.lang==="en" ? s.en : s.zh;
+    var dur = shotSeconds(text, opts.lang, opts.rate);
+    var start = t; t += dur;
+    return { role:s.role, vo:text, visual:s.visual, big:s.big, prompt:buildPrompt(s, opts.lang), start:start, dur:dur, trans:s.trans, sfx:s.sfx };
+  });
+  return { shots:shots, total:t };
+}
+function buildPrompt(s, lang){
+  var base = s.visual;
+  if(lang==="en"){
+    return "Vertical 9:16, cinematic lighting, photorealistic still, consistent character and scene design across all shots, no text in frame. Scene: " + base;
+  }
+  return "竖屏 9:16，电影感打光，写实静帧，全片人物与场景设定保持一致，画面内不出现文字。画面：" + base;
+}
+function findTopic(q){
+  q = (q||"").trim().toLowerCase();
+  if(!q) return null;
+  for(var i=0;i<TOPICS.length;i++){
+    var tp = TOPICS[i];
+    if(tp.name.toLowerCase().indexOf(q)>=0 || q.indexOf(tp.name.toLowerCase())>=0) return tp;
+    for(var j=0;j<tp.keys.length;j++){ if(q.indexOf(tp.keys[j].toLowerCase())>=0) return tp; }
+  }
+  return null;
+}
+/* ================= 生成与渲染 ================= */
+var SCENES = [
+  "linear-gradient(160deg,#23233a,#101018)",
+  "linear-gradient(160deg,#123a3f,#0b1418)",
+  "linear-gradient(160deg,#3a2430,#140d12)",
+  "linear-gradient(160deg,#2c3418,#101208)",
+  "linear-gradient(160deg,#17304a,#0a1018)",
+  "linear-gradient(160deg,#3d2c10,#14100a)"
+];
+function generate(){
+  stopPlay();
+  var q = $("topic").value.trim();
+  if(!q){ toast("先输入一个冷知识主题，或从选题库里选一个"); $("topic").focus(); return; }
+  var known = findTopic(q);
+  var opts = { dur:state.dur, style:state.style, lang:state.lang, rate:state.rate };
+  var raw, title, isTemplate = false, factNote = "", bgm = "", tags = [];
+  if(known){
+    title = known.name;
+    raw = applyStyle(known.shots, state.style, state.lang);
+    factNote = known.factNote; bgm = known.bgm; tags = known.tags.slice();
+  } else {
+    title = q;
+    isTemplate = true;
+    raw = applyStyle(genericShots(q, state.lang), state.style, state.lang);
+    bgm = "按风格选曲：节奏点清晰、无歌词优先，避免盖过旁白";
+    tags = ["冷知识","涨知识"];
+  }
+  var built = assemble(raw, opts);
+  state.script = { title:title, shots:built.shots, total:built.total, isTemplate:isTemplate, factNote:factNote,
+    bgm: bgm + "。" + STYLES[state.style].bgmSuffix + "。", tags:tags.concat(["TikTok脚本","竖屏短视频"]), opts:opts };
+  renderScript();
+}
+function renderScript(){
+  var sc = state.script; if(!sc) return;
+  $("outHead").style.display = "flex";
+  $("stTotal").textContent = sc.total.toFixed(1).replace(/\.0$/,"") + " 秒";
+  $("stShots").textContent = sc.shots.length + " 镜";
+  var units = sc.shots.reduce(function(a,s){ return a + countUnits(s.vo, sc.opts.lang); }, 0);
+  $("stWords").textContent = sc.opts.lang==="en" ? units + " 词" : units + " 字";
+  var diff = sc.total - sc.opts.dur;
+  if(Math.abs(diff) > 3){
+    $("stWarn").style.display = "";
+    $("stDiff").textContent = (diff>0?"+":"") + diff.toFixed(1) + " 秒";
+  } else { $("stWarn").style.display = "none"; }
+  var note = $("noteBox");
+  if(sc.isTemplate){
+    note.className = "note show template";
+    note.innerHTML = "<b>结构模板</b>这个主题不在已核实选题库里，脚本骨架可以直接用；【】里是待填的事实点，填入并核实后再拍摄发布。";
+  } else {
+    note.className = "note show fact";
+    note.innerHTML = "<b>事实出处</b>" + esc(sc.factNote);
+  }
+  var html = '<div class="board"><div class="phone-col">' +
+    '<div class="phone" id="phone"><div class="scene" id="phoneScene"></div><div class="bar"><i id="phoneBar"></i></div></div>' +
+    '<div class="play-row"><button class="primary" id="playBtn" type="button">▶ 播放预览</button>' +
+    '<button id="speedBtn" type="button">2× 速</button></div>' +
+    '<p class="hint">点任意镜头卡片，手机预览会跳到该镜。播放按真实时长走，默认 2 倍速。</p></div>' +
+    '<div class="shots" id="shotList">';
+  sc.shots.forEach(function(s, i){
+    html += '<article class="shot" data-i="' + i + '" tabindex="0" role="button" aria-label="预览第 ' + (i+1) + ' 镜">' +
+      '<div class="shot-top"><span class="shot-no">镜头 ' + (i+1) + '</span>' +
+      '<span class="tc">' + fmtClock(s.start) + " – " + fmtClock(s.start + s.dur) + "（" + s.dur + ' 秒）</span>' +
+      '<span class="role' + (s.role==="钩子" ? " hook" : s.role==="结尾" ? " end" : "") + '">' + esc(s.role) + '</span></div>' +
+      '<p><span class="k">旁白</span><span class="vo">' + esc(s.vo) + '</span></p>' +
+      '<p><span class="k">画面</span>' + esc(s.visual) + '</p>' +
+      '<p><span class="k">屏幕大字</span>' + esc(s.big) + '</p>' +
+      '<p><span class="k">转场/音效</span>' + esc(s.trans) + "；" + esc(s.sfx) + '</p>' +
+      '<p class="prompt"><span class="k">生图提示词</span>' + esc(s.prompt) + '</p></article>';
+  });
+  html += "</div></div>";
+  $("outBody").innerHTML = html;
+  $("bgmText").textContent = sc.bgm;
+  $("tagBox").innerHTML = sc.tags.map(function(t){ return '<span class="tag">#' + esc(t) + "</span>"; }).join("");
+  $("coverText").textContent = "用镜头 1 的画面做封面，标题大字直接用「" + sc.shots[0].big + "」，字号占画面宽度三分之二以上，发布时另配一条置顶评论抛出问题引导讨论。";
+  $("exportZone").style.display = "";
+  var cards = document.querySelectorAll(".shot");
+  Array.prototype.forEach.call(cards, function(c){
+    c.addEventListener("click", function(){ showShot(parseInt(c.getAttribute("data-i"),10)); });
+    c.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); showShot(parseInt(c.getAttribute("data-i"),10)); } });
+  });
+  $("playBtn").addEventListener("click", togglePlay);
+  $("speedBtn").addEventListener("click", function(){
+    playSpeed = playSpeed===2 ? 1 : playSpeed===1 ? 4 : 2;
+    this.textContent = playSpeed + "× 速";
+    if(state.playing){ scheduleNext(); }
+  });
+  showShot(0);
+}
+/* ================= 手机预览播放器 ================= */
+var playSpeed = 2;
+function showShot(i){
+  var sc = state.script; if(!sc || !sc.shots[i]) return;
+  state.playIdx = i;
+  var s = sc.shots[i];
+  var scene = $("phoneScene"); if(!scene) return;
+  $("phone").style.background = SCENES[i % SCENES.length];
+  scene.innerHTML = '<span class="shot-tag">镜头 ' + (i+1) + " / " + sc.shots.length + " · " + esc(s.role) + "</span>" +
+    '<p class="scene-desc">' + esc(s.visual) + "</p>" +
+    '<div class="big">' + esc(s.big) + "</div>" +
+    '<div class="sub">' + esc(s.vo) + "</div>";
+  $("phoneBar").style.width = ((s.start + s.dur) / sc.total * 100) + "%";
+  var cards = document.querySelectorAll(".shot");
+  Array.prototype.forEach.call(cards, function(c){ c.classList.toggle("active", parseInt(c.getAttribute("data-i"),10)===i); });
+}
+function scheduleNext(){
+  clearTimeout(state.timer);
+  if(!state.playing) return;
+  var sc = state.script, s = sc.shots[state.playIdx];
+  state.timer = setTimeout(function(){
+    if(state.playIdx >= sc.shots.length - 1){ stopPlay(); showShot(sc.shots.length-1); return; }
+    showShot(state.playIdx + 1); scheduleNext();
+  }, s.dur / playSpeed * 1000);
+}
+function togglePlay(){
+  if(state.playing){ stopPlay(); return; }
+  if(state.playIdx >= state.script.shots.length - 1) showShot(0);
+  state.playing = true;
+  $("playBtn").textContent = "❚❚ 暂停";
+  scheduleNext();
+}
+function stopPlay(){
+  state.playing = false; clearTimeout(state.timer);
+  var b = $("playBtn"); if(b) b.textContent = "▶ 播放预览";
+}
+/* ================= 导出 ================= */
+function scriptToText(){
+  var sc = state.script, L = [];
+  L.push("# TikTok 分镜脚本：《" + sc.title + "》");
+  L.push("");
+  L.push("- 总时长：约 " + sc.total.toFixed(1) + " 秒（目标 " + sc.opts.dur + " 秒）");
+  L.push("- 画幅：9:16 竖屏 ｜ 镜头数：" + sc.shots.length + " ｜ 风格：" + STYLES[sc.opts.style].label + " ｜ 旁白：" + (sc.opts.lang==="en" ? "English" : "中文"));
+  L.push("- 背景音乐：" + sc.bgm);
+  L.push("- 话题标签：" + sc.tags.map(function(t){ return "#" + t; }).join(" "));
+  if(sc.factNote) L.push("- 事实出处：" + sc.factNote);
+  if(sc.isTemplate) L.push("- 注意：本脚本为结构模板，【】内事实点需填入并核实后再拍摄。");
+  L.push("");
+  sc.shots.forEach(function(s, i){
+    L.push("## 镜头 " + (i+1) + "（" + fmtClock(s.start) + " – " + fmtClock(s.start + s.dur) + "，" + s.dur + " 秒）· " + s.role);
+    L.push("- 旁白：" + s.vo);
+    L.push("- 画面：" + s.visual);
+    L.push("- 屏幕大字：" + s.big);
+    L.push("- 转场/音效：" + s.trans + "；" + s.sfx);
+    L.push("- 生图提示词：" + s.prompt);
+    L.push("");
+  });
+  L.push("## 制作清单");
+  L.push("1. 先录旁白定全片时钟，再按时间码配画面");
+  L.push("2. 第一镜画面定为风格锚点，后续镜头以它为参考图生成");
+  L.push("3. 人物与场景描述词逐字复用，一镜只做一个动作");
+  L.push("4. 画面里的文字一律后期添加");
+  L.push("5. 背景音乐侧链压缩，给旁白让出 −12～−15 dB");
+  L.push("6. 成片响度归一到 −14 LUFS 再发布");
+  return L.join("\n");
+}
+$("copyBtn").addEventListener("click", function(){
+  if(!state.script) return;
+  var text = scriptToText();
+  function done(){ toast("完整脚本已复制，去粘贴到文档或备忘录吧"); }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+  } else { fallbackCopy(text); done(); }
+});
+function fallbackCopy(text){
+  var ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); } catch(e){}
+  document.body.removeChild(ta);
+}
+$("dlBtn").addEventListener("click", function(){
+  if(!state.script) return;
+  var blob = new Blob([scriptToText()], { type:"text/markdown;charset=utf-8" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "TikTok脚本-" + state.script.title.replace(/[\\/:*?"<>|]/g,"") + ".md";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 400);
+  toast("Markdown 脚本已下载");
+});
+/* ================= 界面接线 ================= */
+function segWire(id, key){
+  $(id).addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    Array.prototype.forEach.call(this.querySelectorAll("button"), function(x){ x.classList.remove("on"); });
+    b.classList.add("on"); state[key] = isNaN(+b.getAttribute("data-v")) ? b.getAttribute("data-v") : +b.getAttribute("data-v");
+  });
+}
+segWire("segDur","dur"); segWire("segLang","lang"); segWire("segRate","rate");
+$("styles").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  Array.prototype.forEach.call(this.querySelectorAll("button"), function(x){ x.classList.remove("on"); });
+  b.classList.add("on"); state.style = b.getAttribute("data-v");
+});
+function renderChips(){
+  var box = $("chips"); box.innerHTML = "";
+  TOPICS.forEach(function(tp){
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = tp.name;
+    b.addEventListener("click", function(){
+      $("topic").value = tp.name;
+      Array.prototype.forEach.call(box.querySelectorAll(".chip"), function(x){ x.classList.remove("on"); });
+      b.classList.add("on"); generate();
+    });
+    box.appendChild(b);
+  });
+  EXTRA_IDEAS.forEach(function(name){
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = name + "（模板）";
+    b.addEventListener("click", function(){
+      $("topic").value = name;
+      Array.prototype.forEach.call(box.querySelectorAll(".chip"), function(x){ x.classList.remove("on"); });
+      b.classList.add("on"); generate();
+    });
+    box.appendChild(b);
+  });
+}
+renderChips();
+$("dice").addEventListener("click", function(){
+  var pool = TOPICS.map(function(t){ return t.name; }).concat(EXTRA_IDEAS);
+  var next;
+  do { next = pool[Math.floor(Math.random()*pool.length)]; } while(next === $("topic").value && pool.length > 1);
+  $("topic").value = next; generate();
+});
+$("topic").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); generate(); } });
+$("genBtn").addEventListener("click", generate);
+/* 打开页面先给一份现成示例，方便直接体验 */
+$("topic").value = TOPICS[0].name;
+generate();
+</script>
+</body>
+</html>
